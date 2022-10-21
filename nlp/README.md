@@ -1,6 +1,11 @@
 # This is the folder for the nlp module
 
-TODO:
+## Running the server
+- Run ```./run_nlp``` to start the server
+- Run ```./test_summary``` to send a test request to the summarization API
+
+
+### TODO:
 Load up models in flask init
 Query models in routing API calls
 
