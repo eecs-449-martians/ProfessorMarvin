@@ -10,6 +10,9 @@ Load up models in flask init
 Query models in routing API calls
 
 Find summarization model - https://huggingface.co/facebook/bart-large-cnn
-Find answer/question pair generation model(s) - 
-Find vocab extraction model - 
+Find answer/question pair generation model(s)
+    - https://www.geeksforgeeks.org/python-named-entity-recognition-ner-using-spacy/
+    - https://huggingface.co/mrm8488/t5-base-finetuned-question-generation-ap
+Find vocab extraction model
+    - https://www.geeksforgeeks.org/python-named-entity-recognition-ner-using-spacy/
 Figure out how to do vocab definitions - 
