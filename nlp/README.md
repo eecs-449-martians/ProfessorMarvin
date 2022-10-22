@@ -1,5 +1,9 @@
 # This is the folder for the nlp module
 
+## Setup
+- Run ```pip install -r requirements.txt``` in a python virtual environment to install required packages
+- Run ```python -m spacy download en_core_web_sm``` to download spacy model
+
 ## Running the server
 - Run ```./run_nlp``` to start the server
 - Run ```./test_summary``` to send a test request to the summarization API
