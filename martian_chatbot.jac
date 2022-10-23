@@ -11,6 +11,8 @@ node conversation_state {
     has response;
     // placeholder function for sending text to webapp
     can post_to_webapp;
+    // placeholder function for sending text to backend
+    can post_to_back;
 }
 
 graph conversation {
