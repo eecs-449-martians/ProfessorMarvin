@@ -52,7 +52,7 @@ def get_generated_qa():
     # Run QG model on answers to get questions
     questions = []
     for ac_pair in ans_cntxt:
-        input_text = f"answer: {ac_pair[0]}  context: {ac_pair[1]} </s>"
+        input_text = f"answer: {ac_pair[0][0]}  context: {ac_pair[1]} </s>"
         print(input_text)
 
         features = nlp.qg_tokenizer([input_text], return_tensors='pt')
@@ -69,6 +69,31 @@ def get_generated_qa():
     payload = {
         "questions": questions,
         "answers": answers
+    }
+
+    return flask.jsonify(**payload)
+
+
+
+@nlp.app.route('/nlp/genqa2', methods=["POST"])
+def get_generated_qa2():
+    text = flask.request.get_json()["text"]
+    print("====================== starting ===================")
+    print(text)
+
+    # Summarize
+    summary = nlp.summarizer(text, max_length=260, min_length=200, do_sample=False)[0]["summary_text"]
+    print("====================== summary ===================")
+    print(summary)
+
+    print("====================== qagen ===================")
+
+    # Run QG model on answers to get questions
+    qas = nlp.qagen_model(summary)
+    
+    # Called payload to avoid confusion with question contexts above
+    payload = {
+        "qas": qas
     }
 
     return flask.jsonify(**payload)
