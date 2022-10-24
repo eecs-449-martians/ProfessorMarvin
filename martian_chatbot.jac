@@ -9,10 +9,6 @@ node conversation_state {
     has input;
     // chatbot text response obj
     has response;
-    // placeholder function for sending text to webapp
-    can post_to_webapp;
-    // placeholder function for sending text to backend
-    can post_to_back;
 }
 
 graph conversation {
@@ -104,4 +100,12 @@ node vocab_list_query_node_7:conversation_state {
 }
 node vocab_definition_node_8:conversation_state {
     has name = "vocab_definition_node_8";
+}
+
+walker post_to_webapp {
+
+}
+
+walker post_to_back {
+
 }
