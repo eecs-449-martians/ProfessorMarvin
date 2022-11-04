@@ -18,7 +18,7 @@ def get_style_name(span,
     :param italic_feats: whether or not italic is considered a feature by use_feats. False by default. 
     :returns: 
     """
- 
+    
     name = f"{span['size']}_pt_{span['font'][:6]}"
     if use_feats: 
         if span['flags'] & (2**4): 
@@ -75,7 +75,6 @@ def get_font_freqs(
     :returns: a Counter object (superset of dict) with the frequencies of each style
     """
     freqs = Counter()
-
     for page in doc:
         for block in page.get_text('dict')["blocks"]:
             # print(block)
@@ -95,6 +94,7 @@ def tag_fonts(font_counts:Counter)->Dict[str,str]:
             with each in the format used by `get_style_name`
     """
     freqs = font_counts.most_common()
+
     base_font = freqs[0]
     # define a custom comparator that prioritizes 
     def key(font):
@@ -156,7 +156,6 @@ def gather_texts(
                 # for now we will only use font size 
                 if not combine_consc_blocks:
                     last_style = None 
-                    last_
                     sequence_text = []
                 spans = (span for line in block['lines'] for span in line['spans'] if span['text'].strip())
                 for span in spans: 
@@ -202,8 +201,3 @@ def segment_document(filepath,use_feats=False,use_rgb=False,italic_feats=False,c
     filter_text = lambda text,tag: len(text) > 6 and (tag[:2] != "<s" or int(tag[2:-1]) <10)
     filtered = [text for text,tag in text_chunks if filter_text(text,tag)]
     return filtered
-
-
-def test_func(): 
-    print("hi there")
-    print('this works! ')
