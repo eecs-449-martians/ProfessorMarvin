@@ -18,7 +18,8 @@ def get_text_segs():
 	
 	text_arr = pdf_util.segment_document(filepath)
 	context = {
-		"text_arr" : text_arr 
+		"Status" : "Success",
+		"text segments" : text_arr 
 	}
 	# cleanup by deleting file 
 	os.remove(filepath)
