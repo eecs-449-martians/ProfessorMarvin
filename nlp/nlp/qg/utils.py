@@ -5,9 +5,11 @@ from torch import nn
 def grad_status(model: nn.Module) -> Iterable:
     return (par.requires_grad for par in model.parameters())
 
+
 def freeze_params(model: nn.Module):
     for par in model.parameters():
         par.requires_grad = False
+
 
 def freeze_embeds(model: nn.Module):
     """Freeze token embeddings and positional embeddings for bart, just token embeddings for t5."""
@@ -21,10 +23,12 @@ def freeze_embeds(model: nn.Module):
         for d in [model.encoder, model.decoder]:
             freeze_params(d.embed_tokens)
 
+
 def assert_not_all_frozen(model):
     model_grads: List[bool] = list(grad_status(model))
     npars = len(model_grads)
     assert any(model_grads), f"none of {npars} weights require grad"
+
 
 def label_smoothed_nll_loss(lprobs, target, epsilon, ignore_index=-100):
     """From fairseq"""

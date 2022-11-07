@@ -6,7 +6,7 @@ from nlp.qg import pipelines
 print("Initializing server...")
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 print("Summarizer loaded")
-#spacy_model = spacy.load("en_core_web_sm") # can be changed to "en_core_web_md/lg/trf" for better + slower
+# spacy_model = spacy.load("en_core_web_sm") # can be changed to "en_core_web_md/lg/trf" for better + slower
 print("Spacy model loaded")
 # qg_tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-question-generation-ap")
 # print("Tokenizer loaded")
@@ -19,7 +19,7 @@ print("qagen model loded")
 app = flask.Flask(__name__)
 
 # Read settings from config module (insta485/config.py)
-app.config.from_object('nlp.config')
+app.config.from_object("nlp.config")
 
 import nlp.api
 import nlp.qg

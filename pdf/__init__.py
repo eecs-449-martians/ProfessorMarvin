@@ -1,10 +1,11 @@
-import flask 
+import flask
+
 print("importing")
 
 
-print('starting app')
+print("starting app")
 app = flask.Flask(__name__)
-app.config.from_object('pdf.config')
+app.config.from_object("pdf.config")
 print("app started")
 
-from  pdf.pdf_understanding import * 
+from pdf.pdf_understanding import *
