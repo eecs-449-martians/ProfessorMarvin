@@ -16,4 +16,4 @@ export FLASK_ENV=development
 FLASK_ENV=development
 export FLASK_APP=nlp
 FLASK_APP=nlp
-flask run --host 0.0.0.0 --port 8000
+flask run --no-reload --host 0.0.0.0 --port 8000
