@@ -2,6 +2,8 @@ import re
 import sys
 import flask 
 
+#TODO: output "answer3" and the summarize/quiz to orchestrator, properly output the chatbot text to front end, figure out flask in general 
+
 @chatbot.app.route("/chatbot/chat", methods=["GET", "POST"])
 def summarize_confirm():
     answer = input("Would you like me to summarize a passage?")
