@@ -8,8 +8,8 @@ import os
 import json 
 
 PDF_API_CALL     = 'curl -X POST -F file=@{}  http://localhost:{}/pdf/to_text > {}'
-SUMMARY_API_CALL = "curl -X POST http://127.0.0.1:8000/nlp/summary -H 'Content-Type: application/json' -d {json} > {}"
-QUESTION_API_CALL = "curl -X POST http://127.0.0.1:8000/nlp/genqa2 -H 'Content-Type: application/json' -d {json} > {}"
+SUMMARY_API_CALL = "curl -X POST http://127.0.0.1:8000/nlp/summary -H 'Content-Type: application/json' -d '{}' > {}"
+QUESTION_API_CALL = "curl -X POST http://localhost:8000/nlp/genqa  -H 'Content-Type: application/json' -d '{}' > {}"
 
 
 @orchestrator.app.route("/orch/upload_file", methods=["POST"])
@@ -39,11 +39,13 @@ def ingest_file():
 	summ_path = os.path.join(os.environ["UPLOAD_FOLDER"], f'temp_summ.json')
 	qagen_path = os.path.join(os.environ["UPLOAD_FOLDER"], f'temp_qagen.json')
 	for passage in passages: 
-		text_json = flask.jsonify(text=passage)
+		print(passage)
+		text_json = json.dumps({'text':passage})
 		# call summary 
 		command = SUMMARY_API_CALL.format(text_json,summ_path)
 		print(command)
 		os.system(command)
+		
 
 		# call QAgen
 		command = QUESTION_API_CALL.format(text_json,qagen_path)
@@ -52,11 +54,20 @@ def ingest_file():
 
 		# load outputs 
 		with open(summ_path, 'r') as file:
-			summary_json = json.load(file)
-			print(summary_json)
+			try:
+				summary_json = json.load(file)
+				print(summary_json)
+			except json.decoder.JSONDecodeError:
+				print('error encountered in QAGEN step')
+				continue 
+
 		with open(qagen_path, 'r') as file:
-			qagen_json = json.load(file)
-			print(qagen_json)
+			try:
+				qagen_json = json.load(file)
+				print(qagen_json)
+			except json.decoder.JSONDecodeError:
+				print('error encountered in QAGEN step')
+				qagen_json = {'qas':[]} 
 
 		questions = qagen_json['qas']
 		summary = summary_json['summary']
@@ -65,9 +76,9 @@ def ingest_file():
 	
 	# Inputs: PDF file in requests object 	
 	# Outputs: {Success: (True, False)}
-	return flask.jsonify(Success=True,curr_state=orchestrator.documents.to_dict()) 
+	return flask.jsonify(Success=True,curr_state=orchestrator.documents.passages.to_dict()) 
 
-@orchestrator.app.route("/", methods=["GET"])
+@orchestrator.app.route("/orch/get_question ", methods=["GET"])
 def get_question(): 
 	print('getting question ')
 	"""
@@ -83,7 +94,7 @@ def get_question():
 	return flask.jsonify(Success=True,Question=question)
 
 
-@orchestrator.app.route("/orch/get_summ/", methods=["GET"])
+@orchestrator.app.route("/orch/get_summ", methods=["GET"])
 def get_summary(): 
 	"""
 	Get summary from group
@@ -100,7 +111,7 @@ def get_summary():
 
 
 
-@orchestrator.app.route("/orch/delete_file/", methods=["Post"])
+@orchestrator.app.route("/orch/delete_file", methods=["Post"])
 def delte_file():
 	"""
 	Inputs: {"filename": text } (exact name of file) 
@@ -111,7 +122,7 @@ def delte_file():
 	return flask.jsonify(Success= orchestrator.documents.delete_doc() ) 
 
 
-@orchestrator.app.route("/orch/get_passage/", methods=["GET"])
+@orchestrator.app.route("/orch/get_passage", methods=["GET"])
 def get_passage(): 
 	query = flask.request.get_json()["Query"]
 	passage = orchestrator.documents.get_passage(query)

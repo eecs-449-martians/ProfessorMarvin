@@ -15,8 +15,8 @@ class Documents():
 			self.stops = set(nltk.corpus.stopwords.words('english'))
 
 
-	def add_passage(self,name,text,summary,question): 
-		new_pass = pd.DataFrame([{'name':name,"text":text,"summary":summary,"question":question}])
+	def add_passage(self,name,text,summary,questions): 
+		new_pass = pd.DataFrame([{'name':name,"text":text,"summary":summary,"questions":questions}])
 		self.passages = pd.concat([self.passages,new_pass ],ignore_index=True )
 
 	def delete_doc(self,doc_name): 
@@ -30,8 +30,8 @@ class Documents():
 		query_words = query.split(' ')
 		score_func = lambda text: sum(sum(word == targ for word in text.split(' ') if word not in self.stops) for targ in query_words if targ not in self.stops)
 
-
-		scores = self.passages.summary.apply(score_func)
+		print(self.passages)
+		scores = self.passages['summary'].apply(score_func)
 		print(scores)
 		if scores.max() < 1: 
 			# if no overlap with summary, go to full texts
@@ -53,12 +53,13 @@ class Documents():
 	def get_summary(self,query):
 		entry = self.__get_entry(query)
 		if entry is None: return None 
+		print(entry)
 		return entry['summary']
 	
 	def get_question(self,query): 
 		entry = self.__get_entry(query)
 		if entry is None: return None 
-		question_list = entry['question']
+		question_list = entry['questions']
 		quest_num = self.quest_num %len(question_list)
 		self.quest_num +=1
 		return question_list[quest_num]
