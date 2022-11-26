@@ -20,7 +20,10 @@ class Documents():
 		self.passages = pd.concat([self.passages,new_pass ],ignore_index=True )
 
 	def delete_doc(self,doc_name): 
-		self.passages = self.passages[self.passages.name != doc_name]
+		if (self.passages.name == doc_name).any(): 
+			self.passages = self.passages[self.passages.name != doc_name]
+			return True 
+		return False 
 	
 	def __get_entry(self,query): 
 		# gets best match for query, and returns it 
