@@ -2,7 +2,7 @@
 
 import orchestrator
 import flask
-from flask import request
+from flask import request, url_for
 from werkzeug.utils import secure_filename
 import os
 import json 
@@ -78,7 +78,7 @@ def ingest_file():
 	# Outputs: {Success: (True, False)}
 	return flask.jsonify(Success=True,curr_state=orchestrator.documents.passages.to_dict()) 
 
-@orchestrator.app.route("/orch/get_question ", methods=["GET"])
+@orchestrator.app.route("/orch/get_question", methods=["GET"])
 def get_question(): 
 	print('getting question ')
 	"""
@@ -119,7 +119,9 @@ def delte_file():
 					  success: (True, False) 
 					}
 					"""
-	return flask.jsonify(Success= orchestrator.documents.delete_doc() ) 
+	fname = flask.request.get_json()["filename"]
+
+	return flask.jsonify(Success= orchestrator.documents.delete_doc(fname) ) 
 
 
 @orchestrator.app.route("/orch/get_passage", methods=["GET"])
@@ -131,3 +133,19 @@ def get_passage():
 	return flask.jsonify(Success=True,Text=passage)
 
 
+def has_no_empty_params(rule):
+    defaults = rule.defaults if rule.defaults is not None else ()
+    arguments = rule.arguments if rule.arguments is not None else ()
+    return len(defaults) >= len(arguments)
+
+@orchestrator.app.route("/site-map")
+def list_site_map():
+    links = []
+    for rule in orchestrator.app.url_map.iter_rules():
+        # Filter out rules we can't navigate to in a browser
+        # and rules that require parameters
+        if "GET" in rule.methods and has_no_empty_params(rule):
+            url = url_for(rule.endpoint, **(rule.defaults or {}))
+            links.append((url, rule.endpoint))
+
+    return flask.jsonify(map=links)

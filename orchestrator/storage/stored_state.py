@@ -20,6 +20,9 @@ class Documents():
 		self.passages = pd.concat([self.passages,new_pass ],ignore_index=True )
 
 	def delete_doc(self,doc_name): 
+		if len(self.passages) == 0: 
+			return False
+
 		if (self.passages.name == doc_name).any(): 
 			self.passages = self.passages[self.passages.name != doc_name]
 			return True 
@@ -29,8 +32,8 @@ class Documents():
 		# gets best match for query, and returns it 
 		query_words = query.split(' ')
 		score_func = lambda text: sum(sum(word == targ for word in text.split(' ') if word not in self.stops) for targ in query_words if targ not in self.stops)
-
-		print(self.passages)
+		if len(self.passages) == 0: 
+			return None
 		scores = self.passages['summary'].apply(score_func)
 		print(scores)
 		if scores.max() < 1: 
@@ -60,6 +63,8 @@ class Documents():
 		entry = self.__get_entry(query)
 		if entry is None: return None 
 		question_list = entry['questions']
+		if len(question_list) == 0: 
+			return None
 		quest_num = self.quest_num %len(question_list)
 		self.quest_num +=1
 		return question_list[quest_num]
