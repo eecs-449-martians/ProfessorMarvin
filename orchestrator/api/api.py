@@ -19,8 +19,8 @@ def ingest_file():
     print(" ingesting file")
 
     # get file path
-    filepath = json.loads(request.get_json())['url']
-    filename = json.loads(request.get_json())['filename']
+    filepath = request.get_json()['url']
+    filename = request.get_json()['filename']
     # file = request.files["file"]
     # print("Just got a file called", file.filename)
     # filename = secure_filename(file.filename)
@@ -68,7 +68,7 @@ def ingest_file():
                 summary_json = json.load(file)
                 print(summary_json)
             except json.decoder.JSONDecodeError:
-                print("error encountered in QAGEN step")
+                print("error encountered in SUMMARY step")
                 continue
 
         with open(qagen_path, "r") as file:

@@ -11,7 +11,9 @@ saved_query = ""
 #requires where query is string obj
 @chatbot.app.route("/chatbot/chat", methods=["POST"])
 def respond(): # params - question, summary, start, unknown 
+    print('got request')
     query = flask.request.get_json()["text"]
+    print('hey')
     
     if (chatbot.state == 'start'):
         #start of the program
@@ -94,7 +96,7 @@ def respond(): # params - question, summary, start, unknown
             return {'text': "Sorry, we could not find what you are looking for"}
     
     chatbot.state = "start"
-    return {'text': ""}
+    return flask.jsonify(text = "")
 
     
 
