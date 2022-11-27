@@ -7,27 +7,37 @@ from werkzeug.utils import secure_filename
 import os
 import json
 
-PDF_API_CALL = "curl -X POST -F file=@{}  http://localhost:{}/pdf/to_text > {}"
+#PDF_API_CALL = "curl -X POST -F file=@'{}'  http://localhost:{}/pdf/to_text > '{}'"
+PDF_API_CALL = "curl -X POST http://localhost:{}/pdf/to_text -H 'Content-Type: application/json' -d '{}' > '{}'"
 SUMMARY_API_CALL = "curl -X POST http://127.0.0.1:8000/nlp/summary -H 'Content-Type: application/json' -d '{}' > {}"
 QUESTION_API_CALL = "curl -X POST http://localhost:8000/nlp/genqa  -H 'Content-Type: application/json' -d '{}' > {}"
 
 
 @orchestrator.app.route("/orch/upload_file", methods=["POST"])
 def ingest_file():
+    """ Takes JSON body with 2 values: url and filename for pdf to process"""
     print(" ingesting file")
 
     # get file path
-    file = request.files["file"]
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(os.environ["UPLOAD_FOLDER"], filename)
-    file.save(filepath)
+    filepath = request.get_json()['url']
+    filename = request.get_json()['filename']
+    # file = request.files["file"]
+    # print("Just got a file called", file.filename)
+    # filename = secure_filename(file.filename)
+    # filepath = os.path.join(os.environ["PDF_FOLDER"], filename)
+    #file.save(filepath)
 
     # call pdf thing
     targ_path = os.path.join(os.environ["UPLOAD_FOLDER"], f"{filename}_text.json")
-    command = PDF_API_CALL.format(filepath, 8001, targ_path)
+    print("saving plaintext to", str(targ_path))
+    url_json = json.dumps({'url': filepath})
+    # filepath = url of pdf file to turn to plaintext, targ_path = where to save response json
+    command = PDF_API_CALL.format(8001, url_json, targ_path)
+    print("Making a call to", command)
     os.system(command)
     # read output json
     with open(targ_path, "r") as file:
+        print(list(file.readlines()))
         pdf_texts = json.load(file)
     print(pdf_texts)
     if pdf_texts["Status"] != "Success":
