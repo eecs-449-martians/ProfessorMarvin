@@ -10,13 +10,13 @@ saved_query = ""
 
 #requires where query is string obj
 @chatbot.app.route("/chatbot/chat", methods=["POST"])
-def respond(query): # params - question, summary, start, unknown 
-
+def respond(): # params - question, summary, start, unknown 
+    query = flask.request.get_json()["text"]
     if (state == 'start'):
         #start of the program
         state = 'chat'
         return {'text': "Hello, I'm Professor Marvin, your personal study buddy! Would you like me to summarize a passage, or give you test questions?"}
-        
+    
     elif (state == 'chat'): 
         #find out what user wants
         
