@@ -4,7 +4,11 @@ This is the PDF processing server for the marvin project. It consists of all the
 
 ## Running the flask server 
 
-To run the flask server, start by installing all dependencies found in `readme.md`. 
+To run the flask server, start by installing all dependencies found in `requirements.txt`. 
+
+*Important:* then go to `run_pdf_server`, and change the value assigned to `PATH_TO_FRONTEND` to the absolute path to the main directory of the MarvinFrontend server this project is being used with. 
+
+
 
 Then, navigate to this directory: 
 ``` 
