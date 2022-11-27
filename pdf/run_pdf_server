@@ -3,17 +3,22 @@
 # Run NLP flask server
 #
 # Clean, build and start server
+PORT=${1:-"8001"}
+HOST="0.0.0.0"
+echo "Running with Port= $PORT"
 
 
 # Stop on errors, print commands
 # See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
 set -Eeuo pipefail
 # what does this do? 
-# set -x
+# set -x 
 
 
 # Stuff to run Flask server
 # export FLASK_ENV=development
 export FLASK_APP=__init__.py
-export UPLOAD_FOLDER="/Users/zachary/Documents/eecs_449/project/pdf/flask_server/temp_folder"
-flask run --host 0.0.0.0 --port 8001
+export UPLOAD_FOLDER="$(pwd)/flask_server/temp_folder"
+export PATH_TO_FRONTEND="$(pwd)/../../MarvinWebapp"
+echo $UPLOAD_FOLDER
+flask run --host $HOST --port $PORT

@@ -12,8 +12,9 @@ cd pdf
 ```
 Finally run the script for starting this server. 
 ``` 
-bash run_pdf_server 
+bash run_pdf_server  [Optional: Port_number] 
 ```
+
 
 ## Querying the API  
 
@@ -25,3 +26,4 @@ curl -X POST -F file=@/path/to/your/file/test_file.pdf "http://localhost:[PORT_N
 ```
 
 The API will return a JSON file with two fields: `status`, which returns the request status, and `text segments`,  which contains an array of segmetnted text passages. 
+	

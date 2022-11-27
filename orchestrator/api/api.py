@@ -19,13 +19,15 @@ def ingest_file():
     print(" ingesting file")
 
     # get file path
-    filepath = request.get_json()['url']
-    filename = request.get_json()['filename']
+    filepath = json.loads(request.get_json())['url']
+    filename = json.loads(request.get_json())['filename']
     # file = request.files["file"]
     # print("Just got a file called", file.filename)
     # filename = secure_filename(file.filename)
     # filepath = os.path.join(os.environ["PDF_FOLDER"], filename)
     #file.save(filepath)
+
+    print(filepath,filename)
 
     # call pdf thing
     targ_path = os.path.join(os.environ["UPLOAD_FOLDER"], f"{filename}_text.json")
@@ -37,7 +39,6 @@ def ingest_file():
     os.system(command)
     # read output json
     with open(targ_path, "r") as file:
-        print(list(file.readlines()))
         pdf_texts = json.load(file)
     print(pdf_texts)
     if pdf_texts["Status"] != "Success":

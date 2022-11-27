@@ -20,11 +20,11 @@ def get_style_name(
 
     name = f"{span['size']}_pt_{span['font'][:6]}"
     if use_feats:
-        if span["flags"] & (2**4):
+        if span["flags"] & (2 ** 4):
             name += "_BOLD"
         # if span['flags'] & (2**3):
         #     name += "_MONO"
-        if italic_feats and span["flags"] & (2**1):
+        if italic_feats and span["flags"] & (2 ** 1):
             name += "_ITALIC"
     if use_rgb:
         name += f"_rgb_{span['rgb']:#x}"
