@@ -13,19 +13,28 @@ import requests
 def respond(): # params - question, summary, start, unknown 
     print('got request')
     query = flask.request.get_json()["text"]
-    print('hey')
-    
+
+    # punchline feature 
+    print(re.sub(r"[^a-zA-Z0-9 ]", "", query).lower())
+    if re.sub(r"[^a-zA-Z0-9 ]", "", query).strip().lower() == "marvin youre the best":
+        return {'text': "I know."}
+    if "i love you" in re.sub(r"[^a-zA-Z0-9 ]", "", query).lower():
+        return {'text': "Thats nice."}
+
+
+
+
     if (chatbot.state == 'start'):
         #start of the program
         chatbot.state = 'chat'
-        return {'text': "Hello, I'm Professor Marvin, your personal study buddy! Would you like me to summarize a passage, or give you test questions?"}
+        return {'text': "Hello, I'm Professor Marvin, your personal study buddy! Would you like me to summarize a passage, or find you some information?"}
     
     elif (chatbot.state == 'chat'): 
         #find out what user wants
         
-        sum_words = ("summarize", "summary", "tldr", "important") # "passage", "text"
+        sum_words = ("summarize", "summary", "tldr", "important", 'gist') # "passage", "text"
         quiz_words = ("quiz", "test", "question", "practice") # "exam"
-        passage_words = ("passage", "text", "full")
+        passage_words = ("passage", "text", "full", 'look up', 'look something up')
 
         actions = {"sum_count": 0, "quiz_count": 0, "passage_count": 0}
         
@@ -44,7 +53,7 @@ def respond(): # params - question, summary, start, unknown
                 actions['passage_count'] = actions['passage_count'] + 1
 
         todo = max(actions, key=actions.get)
-        
+
         all_zero = True
         for key in actions:
             if actions[key] != 0:
@@ -55,7 +64,7 @@ def respond(): # params - question, summary, start, unknown
             return {'text': "Sorry, I don't quite understand"}
         elif (todo == "sum_count"):
             # call get_summ from orc
-            #r = requests.post("http://localhost:8002/orch/get_summ/", json=rq_body)
+            #r = requests.get("http://localhost:8002/orch/get_summ/", json=rq_body)
             chatbot.state = "summarize_keyword"
             return {'text': "What do you want me to look for?"}
         elif (todo == "quiz_count"):
@@ -63,7 +72,7 @@ def respond(): # params - question, summary, start, unknown
             return {'text': "What topic would you like me to quiz you on?"}
         elif(todo == "passage_count"):
             chatbot.state = "passage" 
-            return {'text': "What do you want me to look for? [PASSAGE]"}
+            return {'text': "What do you want me to look for?"}
 
     elif (chatbot.state == "passage"):
         r = requests.get("http://localhost:8002/orch/get_passage", json={"Query": query})
@@ -71,7 +80,10 @@ def respond(): # params - question, summary, start, unknown
         if (response['Success']):
             text = response['Text']
             chatbot.state = "chat"
-            return {'text': text}
+            doc_name = response['DocName']
+
+            output = "According to " + doc_name + ":       " + text
+            return {'text': output}
         else:
             chatbot.state = "chat"
             return {'text': "Sorry, we could not find what you are looking for"}
@@ -81,17 +93,19 @@ def respond(): # params - question, summary, start, unknown
         response = r.json()
         if (response['Success']): 
             text = response['Summary']
+            doc_name = response['DocName']
             chatbot.state = "check_fp"
-            return_text = text + "\n \n Would you like the full passage instead of just a summarization?"
             chatbot.saved_query = query
-            return {'text' : return_text}
+
+            output = "According to " + doc_name + ":     \"" + text + "\"        Would you like the full passage instead of just a summarization?"
+            return {'text' : output}
         else:
             chatbot.state = "chat"
             return {'text': "Sorry, we could not find what you are looking for"}
 
     elif (chatbot.state == "check_fp"):
-        yes_words = ("yes", "yup", "sure", "alright") 
-        no_words = ("no", "nah",)
+        yes_words = ("yes", "yup", "sure", "alright", "yep", "yeah", "sure",) 
+        no_words = ("no", "nah")
 
         yes_count = 0
         no_count = 0
@@ -138,7 +152,9 @@ def respond(): # params - question, summary, start, unknown
         if (response['Success']): 
             text = response['Outputs']['Answer']
             chatbot.state = "chat"
-            return {'text' : text}
+            doc_name = response['DocName']
+            output = "According to " + doc_name + ", the answer is: " + text
+            return {'text' : output}
         else:
             chatbot.state = "chat"
             return {'text': "Sorry, we could not find what you are looking for"}

@@ -122,7 +122,7 @@ def get_summary():
     summary = orchestrator.documents.get_summary(query)
     if summary is None:
         return flask.jsonify(Success=False, Summary=None)
-    return flask.jsonify(Success=True, Summary=summary[0], DocName=summary[1])
+    return flask.jsonify(Success=True, Summary=summary[0], DocName=summary[1][:-4])
 
 
 @orchestrator.app.route("/orch/delete_file")
@@ -151,7 +151,7 @@ def get_passage():
     passage = orchestrator.documents.get_passage(query)
     if passage is None:
         return flask.jsonify(Success=False, Passage=None)
-    return flask.jsonify(Success=True, Text=passage[0], DocName=passage[1])
+    return flask.jsonify(Success=True, Text=passage[0], DocName=passage[1][:-4])
 
 
 def has_no_empty_params(rule):

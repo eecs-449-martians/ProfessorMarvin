@@ -223,7 +223,7 @@ def segment_document(
     # Or
     #   3. Are one of the first 10 subscript sizes
 
-    filter_text = lambda text, tag: len(text) > 6 and (
+    filter_text = lambda text, tag: len(text) > 100 and (
         tag[:2] != "<s" or int(tag[2:-1]) < 10
     )
     filtered = [text for text, tag in text_chunks if filter_text(text, tag)]
