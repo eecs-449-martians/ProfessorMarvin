@@ -105,7 +105,7 @@ def get_question():
     query = flask.request.get_json()["Query"]
     question = orchestrator.documents.get_question(query)
     if question is None:
-        return flask.jsonify(Success=False, Question=None)
+        return flask.jsonify(Success=False)
     return flask.jsonify(Success=True, Question=question)
 
 
@@ -122,7 +122,7 @@ def get_summary():
     summary = orchestrator.documents.get_summary(query)
     if summary is None:
         return flask.jsonify(Success=False, Summary=None)
-    return flask.jsonify(Success=True, Summary=summary)
+    return flask.jsonify(Success=True, Summary=summary[0], DocName=summary[1])
 
 
 @orchestrator.app.route("/orch/delete_file", methods=["Post"])
@@ -144,7 +144,7 @@ def get_passage():
     passage = orchestrator.documents.get_passage(query)
     if passage is None:
         return flask.jsonify(Success=False, Text=None)
-    return flask.jsonify(Success=True, Text=passage)
+    return flask.jsonify(Success=True, Text=passage[0], DocName=passage[1])
 
 
 def has_no_empty_params(rule):

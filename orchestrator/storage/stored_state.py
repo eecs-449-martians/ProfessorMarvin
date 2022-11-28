@@ -31,9 +31,9 @@ class Documents:
 
     def __get_entry(self, query):
         # gets best match for query, and returns it
-        query_words = query.split(" ")
+        query_words = query.lower().split(" ")
         score_func = lambda text: sum(
-            sum(word == targ for word in text.split(" ") if word not in self.stops)
+            sum(word == targ for word in text.lower().split(" ") if word not in self.stops)
             for targ in query_words
             if targ not in self.stops
         )
@@ -57,14 +57,14 @@ class Documents:
         entry = self.__get_entry(query)
         if entry is None:
             return None
-        return entry["text"]
+        return entry["text"], entry["name"]
 
     def get_summary(self, query):
         entry = self.__get_entry(query)
         if entry is None:
             return None
         print(entry)
-        return entry["summary"]
+        return entry["summary"], entry["name"]
 
     def get_question(self, query):
         entry = self.__get_entry(query)

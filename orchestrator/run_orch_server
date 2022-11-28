@@ -12,14 +12,15 @@ echo "Running with Port= $PORT"
 # See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
 set -Eeuo pipefail
 # what does this do? 
-set -x 
+# set -x 
 
 
 # Stuff to run Flask server
 # export FLASK_ENV=development
 export FLASK_APP=__init__.py
 export UPLOAD_FOLDER="$(pwd)/flask_server/temp_folder"
-export PDF_FOLDER="$(pwd)/../../MarvinWebapp/src/pdf_uploads"
+export PATH_TO_FRONTEND="$(pwd)/../../MarvinWebapp"
+
 # export FLASK_ENV=development
 export FLASK_ENV=production
 
