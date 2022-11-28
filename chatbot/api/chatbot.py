@@ -6,75 +6,136 @@ import re
 import requests
 
 #state = "start"
-saved_query = ""
+#saved_query = ""
 
 #requires where query is string obj
 @chatbot.app.route("/chatbot/chat", methods=["POST"])
 def respond(): # params - question, summary, start, unknown 
     print('got request')
     query = flask.request.get_json()["text"]
-    print('hey')
-    
+
+    # punchline feature 
+    print(re.sub(r"[^a-zA-Z0-9 ]", "", query).lower())
+    if re.sub(r"[^a-zA-Z0-9 ]", "", query).strip().lower() == "marvin youre the best":
+        return {'text': "I know."}
+    if "i love you" in re.sub(r"[^a-zA-Z0-9 ]", "", query).lower():
+        return {'text': "Thats nice."}
+
+
+
+
     if (chatbot.state == 'start'):
         #start of the program
         chatbot.state = 'chat'
-        return {'text': "Hello, I'm Professor Marvin, your personal study buddy! Would you like me to summarize a passage, or give you test questions?"}
+        return {'text': "Hello, I'm Professor Marvin, your personal study buddy! Would you like me to summarize a passage, or find you some information?"}
     
     elif (chatbot.state == 'chat'): 
         #find out what user wants
         
-        sum_words = ("summarize", "summary", "tldr", "important") # "passage", "text"
+        sum_words = ("summarize", "summary", "tldr", "important", 'gist') # "passage", "text"
         quiz_words = ("quiz", "test", "question", "practice") # "exam"
-        #vocab_list = ("vocab", "list", "words", "terms")
-        #vocab_specific_definition = ("define", "definition", "word", "mean", "term")
+        passage_words = ("passage", "text", "full", 'look up', 'look something up')
 
-        sum_count = 0
-        quiz_count = 0
-        #vocab_list_count, vocab_define_count = 0
+        actions = {"sum_count": 0, "quiz_count": 0, "passage_count": 0}
         
         query = query.lower()
 
         for word in sum_words:
             if (re.search(word, query)):
-                sum_count = sum_count + 1
+                actions['sum_count'] = actions['sum_count'] + 1
 
         for word in quiz_words:
             if (re.search(word, query)):
-                quiz_count = quiz_count + 1
+                actions['quiz_count'] = actions['quiz_count'] + 1
 
-        #for word in vocab_list:
-        #    if (re.search(word, query)):
-        #        vocab_list_count += 1
+        for word in passage_words:
+            if (re.search(word, query)):
+                actions['passage_count'] = actions['passage_count'] + 1
 
-        #for word in vocab_specific_definition:
-        #    if (re.search(word, query)):
-        #        vocab_define_count += 1
+        todo = max(actions, key=actions.get)
 
-        if (sum_count > quiz_count):
+        all_zero = True
+        for key in actions:
+            if actions[key] != 0:
+                all_zero = False
+
+        if (all_zero):
+            chatbot.state = "chat"
+            return {'text': "Sorry, I don't quite understand"}
+        elif (todo == "sum_count"):
             # call get_summ from orc
-            #r = requests.post("http://localhost:8002/orch/get_summ/", json=rq_body)
+            #r = requests.get("http://localhost:8002/orch/get_summ/", json=rq_body)
             chatbot.state = "summarize_keyword"
-            return {'text': "What part would you like me to summarize?"}
-        elif (sum_count < quiz_count):
+            return {'text': "What do you want me to look for?"}
+        elif (todo == "quiz_count"):
             chatbot.state = "quiz_keyword"
-            return {'text': "What would you like me to quiz?"}
+            return {'text': "What topic would you like me to quiz you on?"}
+        elif(todo == "passage_count"):
+            chatbot.state = "passage" 
+            return {'text': "What do you want me to look for?"}
+
+    elif (chatbot.state == "passage"):
+        r = requests.get("http://localhost:8002/orch/get_passage", json={"Query": query})
+        response = r.json()
+        if (response['Success']):
+            text = response['Text']
+            chatbot.state = "chat"
+            doc_name = response['DocName']
+
+            output = "According to " + doc_name + ":       " + text
+            return {'text': output}
         else:
-            chatbot.state = "chat" 
-            return {'text': "I'm sorry, I don't quite understand"}
+            chatbot.state = "chat"
+            return {'text': "Sorry, we could not find what you are looking for"}
     
     elif (chatbot.state == "summarize_keyword"):
         r = requests.get("http://localhost:8002/orch/get_summ", json={"Query": query})
         response = r.json()
         if (response['Success']): 
             text = response['Summary']
-            chatbot.state = "chat"
-            return {'text' : text}
+            doc_name = response['DocName']
+            chatbot.state = "check_fp"
+            chatbot.saved_query = query
+
+            output = "According to " + doc_name + ":     \"" + text + "\"        Would you like the full passage instead of just a summarization?"
+            return {'text' : output}
         else:
             chatbot.state = "chat"
             return {'text': "Sorry, we could not find what you are looking for"}
+
+    elif (chatbot.state == "check_fp"):
+        yes_words = ("yes", "yup", "sure", "alright", "yep", "yeah", "sure",) 
+        no_words = ("no", "nah")
+
+        yes_count = 0
+        no_count = 0
+        
+        query = query.lower()
+
+        for word in yes_words:
+            if (re.search(word, query)):
+                yes_count = yes_count + 1
+
+        for word in no_words:
+            if (re.search(word, query)):
+                no_count = no_count + 1
+
+        if (yes_count > no_count):
+            r = requests.get("http://localhost:8002/orch/get_passage", json={"Query": chatbot.saved_query})
+            response = r.json()
+            if (response['Success']):
+                text = response['Text']
+                chatbot.state = "chat"
+                return {'text': text}
+            else:
+                chatbot.state = "chat"
+                return {'text': "Sorry, we could not find what you are looking for"}
+        else:
+            chatbot.state = "chat" 
+            return {'text': "That is ok! I hope I can still help!"}
             
     elif (chatbot.state == "quiz_keyword"):
-        r = requests.post("http://localhost:8002/orch/get_question", json={"Query": query})
+        r = requests.get("http://localhost:8002/orch/get_question", json={"Query": query})
         response = r.json()
         if (response['Success']): 
             text = response['Outputs']['Question']
@@ -82,15 +143,18 @@ def respond(): # params - question, summary, start, unknown
             return {'text' : text}
         else:
             chatbot.state = "chat"
-            saved_query = query
+            chatbot.saved_query = query
             return {'text': "Sorry, we could not find what you are looking for"}
+
     elif (chatbot.state == "answer"):
-        r = requests.post("http://localhost:8002/orch/get_question", json={"Query": saved_query})
+        r = requests.get("http://localhost:8002/orch/get_question", json={"Query": chatbot.saved_query})
         response = r.json()
         if (response['Success']): 
             text = response['Outputs']['Answer']
             chatbot.state = "chat"
-            return {'text' : text}
+            doc_name = response['DocName']
+            output = "According to " + doc_name + ", the answer is: " + text
+            return {'text' : output}
         else:
             chatbot.state = "chat"
             return {'text': "Sorry, we could not find what you are looking for"}

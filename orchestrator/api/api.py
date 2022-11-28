@@ -93,7 +93,7 @@ def ingest_file():
     )
 
 
-@orchestrator.app.route("/orch/get_question", methods=["GET"])
+@orchestrator.app.route("/orch/get_question")
 def get_question():
     print("getting question ")
     """
@@ -109,7 +109,7 @@ def get_question():
     return flask.jsonify(Success=True, Question=question)
 
 
-@orchestrator.app.route("/orch/get_summ", methods=["GET"])
+@orchestrator.app.route("/orch/get_summ")
 def get_summary():
     """
     Get summary from group
@@ -122,10 +122,10 @@ def get_summary():
     summary = orchestrator.documents.get_summary(query)
     if summary is None:
         return flask.jsonify(Success=False, Summary=None)
-    return flask.jsonify(Success=True, Summary=summary[0], DocName=summary[1])
+    return flask.jsonify(Success=True, Summary=summary[0], DocName=summary[1][:-4])
 
 
-@orchestrator.app.route("/orch/delete_file", methods=["Post"])
+@orchestrator.app.route("/orch/delete_file")
 def delte_file():
     """
     Inputs: {"filename": text } (exact name of file)
@@ -138,13 +138,20 @@ def delte_file():
     return flask.jsonify(Success=orchestrator.documents.delete_doc(fname))
 
 
-@orchestrator.app.route("/orch/get_passage", methods=["GET"])
+@orchestrator.app.route("/orch/get_passage",methods=["POST","GET"])
 def get_passage():
+    """
+    Get summary from group
+    Inputs: {"Query": text } (describing goal)
+    return format  {dict:
+                                success: (True, False),
+                                    Summary: Text }
+    """
     query = flask.request.get_json()["Query"]
     passage = orchestrator.documents.get_passage(query)
     if passage is None:
-        return flask.jsonify(Success=False, Text=None)
-    return flask.jsonify(Success=True, Text=passage[0], DocName=passage[1])
+        return flask.jsonify(Success=False, Passage=None)
+    return flask.jsonify(Success=True, Text=passage[0], DocName=passage[1][:-4])
 
 
 def has_no_empty_params(rule):
