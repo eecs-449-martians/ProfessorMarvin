@@ -138,22 +138,24 @@ def respond(): # params - question, summary, start, unknown
         r = requests.get("http://localhost:8002/orch/get_question", json={"Query": query})
         response = r.json()
         if (response['Success']): 
-            text = response['Outputs']['Question']
+            question = response['Question']
+            chatbot.curr_answer = response['Answer']
+            chatbot.curr_question_doc = response["DocName"]
             chatbot.state = "answer"
-            return {'text' : text}
+            return {'text' : question}
         else:
             chatbot.state = "chat"
             chatbot.saved_query = query
             return {'text': "Sorry, we could not find what you are looking for"}
 
     elif (chatbot.state == "answer"):
-        r = requests.get("http://localhost:8002/orch/get_question", json={"Query": chatbot.saved_query})
-        response = r.json()
-        if (response['Success']): 
-            text = response['Outputs']['Answer']
+        # r = requests.get("http://localhost:8002/orch/get_question", json={"Query": chatbot.saved_query})
+        # response = r.json()
+
+        if (chatbot.curr_answer is not None and chatbot.curr_question_doc is not None  ): 
             chatbot.state = "chat"
-            doc_name = response['DocName']
-            output = "According to " + doc_name + ", the answer is: " + text
+            output = "According to " + chatbot.curr_question_doc + ", the answer is: " + chatbot.curr_answer
+            chatbot.curr_question_doc, chatbot.curr_answer = None, None 
             return {'text' : output}
         else:
             chatbot.state = "chat"

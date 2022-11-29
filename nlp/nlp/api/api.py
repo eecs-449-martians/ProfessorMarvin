@@ -68,6 +68,7 @@ def get_generated_qa():
     
     # Called payload to avoid confusion with question contexts above
     payload = {
+        "summary": summary,
         "questions": questions,
         "answers": answers
     }

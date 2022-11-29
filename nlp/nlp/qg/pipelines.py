@@ -327,10 +327,10 @@ SUPPORTED_TASKS = {
 
 def pipeline(
     task: str,
-    model: Optional = None,
+    model = None,
     tokenizer: Optional[Union[str, PreTrainedTokenizer]] = None,
     qg_format: Optional[str] = "highlight",
-    ans_model: Optional = None,
+    ans_model = None,
     ans_tokenizer: Optional[Union[str, PreTrainedTokenizer]] = None,
     use_cuda: Optional[bool] = True,
     **kwargs,
