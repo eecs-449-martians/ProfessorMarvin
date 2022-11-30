@@ -75,4 +75,4 @@ class Documents:
             return None
         quest_num = self.quest_num % len(question_list)
         self.quest_num += 1
-        return question_list[quest_num]
+        return question_list[quest_num], entry["name"]
