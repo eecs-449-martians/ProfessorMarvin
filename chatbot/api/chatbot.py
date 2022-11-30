@@ -8,6 +8,16 @@ import requests
 #state = "start"
 #saved_query = ""
 
+TARG_WORDS = {
+        'summary':["summarize", "summary", "tldr", "important", 'gist'] ,
+        'quiz': ["quiz", "test", "question", "practice"], 
+        'passage':["passage", "text", "full", 'look up', 'look something up',"search for"],
+        'summary_split':  ["about","on",'of'],
+        'quiz_split':["about","on"],
+        'passage_split':["about","on", "search for"],
+        }
+
+
 #requires where query is string obj
 @chatbot.app.route("/chatbot/chat", methods=["POST"])
 def respond(): # params - question, summary, start, unknown 
@@ -32,23 +42,24 @@ def respond(): # params - question, summary, start, unknown
     elif (chatbot.state == 'chat'): 
         #find out what user wants
         
-        sum_words = ("summarize", "summary", "tldr", "important", 'gist') # "passage", "text"
-        quiz_words = ("quiz", "test", "question", "practice") # "exam"
-        passage_words = ("passage", "text", "full", 'look up', 'look something up')
+        topic_words_sum =  ["about","on",'of']
+        topic_words_quiz = ["about","on"]
+        topic_words_passage = ["about","on", "search for"]
+
 
         actions = {"sum_count": 0, "quiz_count": 0, "passage_count": 0}
         
         query = query.lower()
 
-        for word in sum_words:
+        for word in TARG_WORDS['summary']:
             if (re.search(word, query)):
                 actions['sum_count'] = actions['sum_count'] + 1
 
-        for word in quiz_words:
+        for word in TARG_WORDS['quiz']:
             if (re.search(word, query)):
                 actions['quiz_count'] = actions['quiz_count'] + 1
 
-        for word in passage_words:
+        for word in TARG_WORDS['passage']:
             if (re.search(word, query)):
                 actions['passage_count'] = actions['passage_count'] + 1
 
@@ -63,45 +74,83 @@ def respond(): # params - question, summary, start, unknown
             chatbot.state = "chat"
             return {'text': "Sorry, I don't quite understand"}
         elif (todo == "sum_count"):
-            # call get_summ from orc
-            #r = requests.get("http://localhost:8002/orch/get_summ/", json=rq_body)
+            # check if we have a query built into the first command 
+            for split_word in TARG_WORDS['summary_split']: 
+                # check if word is in query 
+                if split_word in query:
+                    splits = query.split(split_word)
+                    mode_part,query_part = splits[0], split_word.join(splits[1:])
+                    # verify that target is before the split 
+                    if check_query_parts(mode_part,query_part,"summary"): 
+                        message,success = do_summary_query(query_part)
+                        if success:
+                            chatbot.state = "check_fp"
+                            return {'text':message}
+            # else go ask wheat they do... 
             chatbot.state = "summarize_keyword"
             return {'text': "What do you want me to look for?"}
         elif (todo == "quiz_count"):
+            # check if we have a query built into the first command 
+            for split_word in TARG_WORDS['quiz_split']: 
+                # check if word is in query 
+                if split_word in query:
+                    splits = query.split(split_word)
+                    mode_part,query_part = splits[0], split_word.join(splits[1:])
+                    # verify that target is before the split 
+                    if check_query_parts(mode_part,query_part,"quiz"): 
+                        message,success = do_question_query(query_part)
+                        if success:
+                            chatbot.state = "answer"
+                            return {'text':message}
+            # else go ask wheat they do... 
             chatbot.state = "quiz_keyword"
             return {'text': "What topic would you like me to quiz you on?"}
         elif(todo == "passage_count"):
+            # check if we have a query built into the first command 
+            for split_word in TARG_WORDS['passage_split']: 
+                # check if word is in query 
+                if split_word in query:
+                    splits = query.split(split_word)
+                    mode_part,query_part = splits[0], split_word.join(splits[1:])
+                    # verify that target is before the split 
+                    if check_query_parts(mode_part,query_part,"passage"): 
+                        message,success = do_passage_query(query_part)
+                        if success:
+                            chatbot.state = "chat"
+                            return {'text':message}
+
+            # else go ask wheat they do... 
             chatbot.state = "passage" 
             return {'text': "What do you want me to look for?"}
 
     elif (chatbot.state == "passage"):
-        r = requests.get("http://localhost:8002/orch/get_passage", json={"Query": query})
-        response = r.json()
-        if (response['Success']):
-            text = response['Text']
-            chatbot.state = "chat"
-            doc_name = response['DocName']
-
-            output = "According to " + doc_name + ":       " + text
-            return {'text': output}
-        else:
-            chatbot.state = "chat"
-            return {'text': "Sorry, we could not find what you are looking for"}
+        print(query)
+        message,success = do_passage_query(query)
+        # update state and return 
+        chatbot.state="chat"
+        return {"text": message}
     
     elif (chatbot.state == "summarize_keyword"):
-        r = requests.get("http://localhost:8002/orch/get_summ", json={"Query": query})
-        response = r.json()
-        if (response['Success']): 
-            text = response['Summary']
-            doc_name = response['DocName']
+        print(query)
+        # do the lookup 
+        message,success = do_summary_query(query)
+        # act on the lookup 
+        if success: 
             chatbot.state = "check_fp"
             chatbot.saved_query = query
-
-            output = "According to " + doc_name + ":     \"" + text + "\"        Would you like the full passage instead of just a summarization?"
-            return {'text' : output}
-        else:
+        else: 
             chatbot.state = "chat"
-            return {'text': "Sorry, we could not find what you are looking for"}
+        return {"text":message}
+
+    elif (chatbot.state == "quiz_keyword"):
+        print(query)
+        message, success = do_question_query(query)
+        if success: 
+            chatbot.state = "answer"
+        else:  
+            chatbot.state = "chat"
+        return {"text":message}
+
 
     elif (chatbot.state == "check_fp"):
         yes_words = ("yes", "yup", "sure", "alright", "yep", "yeah", "sure",) 
@@ -130,23 +179,13 @@ def respond(): # params - question, summary, start, unknown
             else:
                 chatbot.state = "chat"
                 return {'text': "Sorry, we could not find what you are looking for"}
-        else:
+        elif yes_count == no_count == 0: 
+            chatbot.state = "chat"
+            return respond() 
+        else: 
             chatbot.state = "chat" 
             return {'text': "That is ok! I hope I can still help!"}
             
-    elif (chatbot.state == "quiz_keyword"):
-        r = requests.get("http://localhost:8002/orch/get_question", json={"Query": query})
-        response = r.json()
-        if (response['Success']): 
-            question = response['Question']
-            chatbot.curr_answer = response['Answer']
-            chatbot.curr_question_doc = response["DocName"]
-            chatbot.state = "answer"
-            return {'text' : question}
-        else:
-            chatbot.state = "chat"
-            chatbot.saved_query = query
-            return {'text': "Sorry, we could not find what you are looking for"}
 
     elif (chatbot.state == "answer"):
         # r = requests.get("http://localhost:8002/orch/get_question", json={"Query": chatbot.saved_query})
@@ -165,8 +204,60 @@ def respond(): # params - question, summary, start, unknown
     return flask.jsonify(text = "")
 
     
+def check_query_parts(act_part:str,query_part:str,type:str)-> bool : 
+    """ 
+    Given parts of a query, verify that the start and end are valid 
+    """
+    wordlist = TARG_WORDS[type]
+    # check that at least one word is after the split 
+    if(len(query_part.strip()) < 4): return False
+    # check that  the target is before the split 
+    for word in wordlist: 
+        if word in act_part: 
+            return True 
+    return False 
 
     #print(query)
+def do_summary_query(query): 
+    """ 
+    given a query, return a ret string and a boolean indicating if the lookup was a success
+    """
+    r = requests.get("http://localhost:8002/orch/get_summ", json={"Query": query})
+    response = r.json()
+    if (response['Success']): 
+        text = response['Summary']
+        doc_name = response['DocName']
+
+        output = "According to " + doc_name + ":     \"" + text + "\"        Would you like the full passage instead of just a summarization?"
+        return  output, True
+    else:
+        return "Sorry, we could not find what you are looking for", False 
+
+def do_passage_query(query):
+    r = requests.get("http://localhost:8002/orch/get_passage", json={"Query": query})
+    response = r.json()
+    if (response['Success']):
+        text = response['Text']
+        doc_name = response['DocName']
+
+        output = "According to " + doc_name + ":       " + text
+        return output, True
+    else:
+        return "Sorry, we could not find what you are looking for", False 
+
+def do_question_query(query):
+    r = requests.get("http://localhost:8002/orch/get_question", json={"Query": query})
+    response = r.json()
+    print(response)
+    if (response['Success']): 
+        question = response['Question']
+        chatbot.curr_answer = response['Answer']
+        chatbot.curr_question_doc = response["DocName"]
+        return  question, True 
+    else:
+        chatbot.saved_query = query
+        return "Sorry, we don't have any questions for that", False 
+
 
 #if __name__ == "__main__":
     #args = sys.argv

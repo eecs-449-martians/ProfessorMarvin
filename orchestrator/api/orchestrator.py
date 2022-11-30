@@ -124,7 +124,9 @@ def get_question():
 					Outputs: {Question: text, Answer:text}, DocName:text} """
     query = flask.request.get_json()["Query"]
     doc_question = orchestrator.documents.get_question(query)
+    print(query,doc_question)
     if doc_question is None:
+        print(orchestrator.documents.passages)
         return flask.jsonify(Success=False)
     question,doc = doc_question
     return flask.jsonify(Success=True, Question=question[0],Answer=question[1],DocName=doc)
@@ -141,7 +143,9 @@ def get_summary():
     """
     query = flask.request.get_json()["Query"]
     summary = orchestrator.documents.get_summary(query)
+    print(query,summary)
     if summary is None:
+        print(orchestrator.documents.passages)
         return flask.jsonify(Success=False, Summary=None)
     return flask.jsonify(Success=True, Summary=summary[0], DocName=summary[1][:-4])
 
@@ -170,7 +174,9 @@ def get_passage():
     """
     query = flask.request.get_json()["Query"]
     passage = orchestrator.documents.get_passage(query)
+    print(query,passage)
     if passage is None:
+        print(orchestrator.documents.passages)
         return flask.jsonify(Success=False, Passage=None)
     return flask.jsonify(Success=True, Text=passage[0], DocName=passage[1][:-4])
 
