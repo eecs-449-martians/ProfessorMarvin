@@ -4,6 +4,7 @@ import orchestrator
 import flask
 from flask import request, url_for
 from werkzeug.utils import secure_filename
+import requests
 import os
 import json
 
@@ -51,36 +52,55 @@ def ingest_file():
     qagen_path = os.path.join(os.environ["UPLOAD_FOLDER"], f"temp_qagen.json")
     for passage in passages:
         print(passage)
-        text_json = json.dumps({"text": passage})
+        # text_json = json.dumps({"text": passage})
         # call summary
-        command = SUMMARY_API_CALL.format(text_json, summ_path)
-        print(command)
-        os.system(command)
+        # command = SUMMARY_API_CALL.format(text_json, summ_path)
+        # print(command)
+        # os.system(command)
+        # summ_resp = requests.post("http://127.0.0.1:8000/nlp/summary",json={"text": passage})
 
         # call QAgen
-        command = QUESTION_API_CALL.format(text_json, qagen_path)
-        print(command)
-        os.system(command)
+        # command = QUESTION_API_CALL.format(text_json, qagen_path)
+        # print(command)
+        # os.system(command)
+
 
         # load outputs
-        with open(summ_path, "r") as file:
+        # try:
+        #     summary_json = summ_resp.json()
+        #     print(summary_json)
+        # except json.decoder.JSONDecodeError:
+        #     print("error encountered in SUMMARY step")
+        #     continue
+
+        qagen_resp = requests.post("http://127.0.0.1:8000/nlp/genqa",json={"text": passage})
+        try:
+            qagen_json = qagen_resp.json()
+            print(qagen_json)
+            questions =  list(
+                zip(
+                    (quest [16:-4]for quest in qagen_json["questions"]),
+                    (answer[0] for answer in qagen_json["answers"])
+
+                )
+            )
+            summary = qagen_json["summary"]
+            print(questions)
+            print(summary)
+        except json.decoder.JSONDecodeError:
+            print("error encountered in QAGEN step")
+            questions = []
+            # if our other thing didn't work we still need to grab the summaries
+            summ_resp = requests.post("http://127.0.0.1:8000/nlp/summary",json={"text": passage})
             try:
-                summary_json = json.load(file)
+                summary_json = summ_resp.json()
                 print(summary_json)
+                summary = summary_json["summary"]
             except json.decoder.JSONDecodeError:
                 print("error encountered in SUMMARY step")
-                continue
+                
 
-        with open(qagen_path, "r") as file:
-            try:
-                qagen_json = json.load(file)
-                print(qagen_json)
-            except json.decoder.JSONDecodeError:
-                print("error encountered in QAGEN step")
-                qagen_json = {"qas": []}
 
-        questions = qagen_json["qas"]
-        summary = summary_json["summary"]
         print(questions, summary)
         orchestrator.documents.add_passage(
             name=filename, text=passage, summary=summary, questions=questions
@@ -101,12 +121,13 @@ def get_question():
 	Inputs: {"Query": text } (describing goal) 
 	return format  {dict: 
 					success(True, False), 
-					Outputs: {Question: text, Answer:text}} """
+					Outputs: {Question: text, Answer:text}, DocName:text} """
     query = flask.request.get_json()["Query"]
-    question = orchestrator.documents.get_question(query)
-    if question is None:
+    doc_question = orchestrator.documents.get_question(query)
+    if doc_question is None:
         return flask.jsonify(Success=False)
-    return flask.jsonify(Success=True, Question=question)
+    question,doc = doc_question
+    return flask.jsonify(Success=True, Question=question[0],Answer=question[1],DocName=doc)
 
 
 @orchestrator.app.route("/orch/get_summ")
